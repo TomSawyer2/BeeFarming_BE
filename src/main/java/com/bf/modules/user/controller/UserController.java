@@ -6,10 +6,7 @@ import com.bf.modules.user.dto.LoginDto;
 import com.bf.modules.user.dto.RegisterDto;
 import com.bf.modules.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
@@ -17,11 +14,24 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @GetMapping("/")
+    public CommonResult helloWorld() {
+        return CommonResult.success(null, "Hello World for BF");
+    }
+
     @PostMapping("/register")
     public CommonResult register(@RequestBody RegisterDto registerDto) {
-        Boolean res = userService.register(registerDto);
-        if (res) return CommonResult.success();
-        else return CommonResult.failed(ResultCode.USER_EXISTS);
+        Integer res = userService.register(registerDto);
+        if (res != 0) {
+            switch (res) {
+                case 1:
+                    return CommonResult.failed(ResultCode.USERNAME_EXIST);
+                default:
+                    return CommonResult.failed(ResultCode.FAILED);
+            }
+        } else {
+            return CommonResult.success(null, "注册成功");
+        }
     }
 
     @PostMapping("/login")

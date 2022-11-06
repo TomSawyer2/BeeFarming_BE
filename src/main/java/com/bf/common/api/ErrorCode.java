@@ -1,6 +1,6 @@
 package com.bf.common.api;
 
 public interface ErrorCode {
-    long getCode();
+    Integer getCode();
     String getMessage();
 }
