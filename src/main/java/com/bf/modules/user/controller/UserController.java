@@ -21,17 +21,8 @@ public class UserController {
 
     @PostMapping("/register")
     public CommonResult register(@RequestBody RegisterDto registerDto) {
-        Integer res = userService.register(registerDto);
-        if (res != 0) {
-            switch (res) {
-                case 1:
-                    return CommonResult.failed(ResultCode.USERNAME_EXIST);
-                default:
-                    return CommonResult.failed(ResultCode.FAILED);
-            }
-        } else {
-            return CommonResult.success(null, "注册成功");
-        }
+        userService.register(registerDto);
+        return CommonResult.success(null, "注册成功");
     }
 
     @PostMapping("/login")
