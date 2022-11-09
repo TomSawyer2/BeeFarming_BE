@@ -166,7 +166,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.3.7.RELEASE</version>
                 <configuration>
-                    <mainClass>com.hkx.BlogApplication</mainClass>
+                    <mainClass>com.bf.BeeFarmingBeApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
