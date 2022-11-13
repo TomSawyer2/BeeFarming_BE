@@ -1,7 +1,6 @@
 package com.bf.modules.user.controller;
 
 import com.bf.common.api.CommonResult;
-import com.bf.common.api.ResultCode;
 import com.bf.modules.user.dto.LoginDto;
 import com.bf.modules.user.dto.RegisterDto;
 import com.bf.modules.user.service.UserService;

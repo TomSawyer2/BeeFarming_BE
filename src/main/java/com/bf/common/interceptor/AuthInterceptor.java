@@ -1,7 +1,6 @@
 package com.bf.common.interceptor;
 
 import com.bf.common.annotation.LoginRequired;
-import com.bf.common.api.CommonResult;
 import com.bf.common.api.ResultCode;
 import com.bf.common.enums.Permission;
 import com.bf.common.exception.Asserts;

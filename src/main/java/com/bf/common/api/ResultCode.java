@@ -6,10 +6,11 @@ public enum ResultCode implements ErrorCode {
     USERNAME_EXIST(1, "用户名已存在"),
     USER_NOT_EXIST(2, "用户不存在"),
     PWD_ERR(3, "密码错误"),
-    VALIDATE_FAILED(401, "验证失败"),
-    UNAUTHORIZED(402, "未授权"),
-    FORBIDDEN(403, "Forbidden"),
-    TOKEN_MISSING(404, "未检测到token");
+    CODE_NOT_EXIST(101, "代码不存在"),
+    VALIDATE_FAILED(1001, "验证失败"),
+    UNAUTHORIZED(1002, "未授权"),
+    FORBIDDEN(1003, "Forbidden"),
+    TOKEN_MISSING(1004, "未检测到token");
 
     private final Integer code;
     private final String message;
