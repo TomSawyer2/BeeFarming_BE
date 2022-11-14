@@ -15,7 +15,7 @@ public class UserController {
 
     @GetMapping("/")
     public CommonResult helloWorld() {
-        return CommonResult.success(null, "Hello World for BF");
+        return CommonResult.success(null, "Hello World for BF, test CICD");
     }
 
     @PostMapping("/register")

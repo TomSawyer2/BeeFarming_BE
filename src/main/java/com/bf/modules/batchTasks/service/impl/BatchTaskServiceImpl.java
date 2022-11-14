@@ -41,6 +41,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             // 如果没有codeId，说明是上传代码
             Code code = new Code();
             code.setContent(uploadCodeForBatchTasksDto.getContent());
+            // 获取当前用户
             User currentUser = AuthInterceptor.getCurrentUser();
             Integer currentUserId = currentUser.getId();
             code.setUserId(currentUserId);
