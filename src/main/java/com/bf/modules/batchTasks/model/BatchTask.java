@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("batch_tasks")
@@ -19,4 +21,28 @@ public class BatchTask {
     private Integer userId;
 
     private Integer status;
+
+    private Integer codeIdAHoney;
+
+    private Integer codeIdAHornet;
+
+    private Integer codeIdBHoney;
+
+    private Integer codeIdBHornet;
+
+    private String upperGoalsA;
+
+    private String upperGoalsB;
+
+    private String lowerGoalsA;
+
+    private String lowerGoalsB;
+
+    private Integer totalRounds;
+
+    private Integer currentRound;
+
+    private java.util.Date startTime;
+
+    private java.util.Date endTime;
 }

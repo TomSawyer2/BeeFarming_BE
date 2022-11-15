@@ -17,4 +17,6 @@ public class Code {
     private String content;
 
     private Integer userId;
+
+    private String type;
 }
