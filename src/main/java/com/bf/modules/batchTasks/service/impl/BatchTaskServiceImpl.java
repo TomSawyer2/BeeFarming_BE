@@ -67,8 +67,19 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public RunBatchTasksVo runBatchTasks(RunBatchTasksDto runBatchTasksDto) {
         BatchTask batchTask = new BatchTask();
         BeanUtils.copyProperties(runBatchTasksDto, batchTask);
+        Code codeAHoney = codeMapper.selectById(runBatchTasksDto.getCodeIdAHoney());
+        Code codeAHornet = codeMapper.selectById(runBatchTasksDto.getCodeIdAHornet());
+        Code codeBHoney = codeMapper.selectById(runBatchTasksDto.getCodeIdBHoney());
+        Code codeBHornet = codeMapper.selectById(runBatchTasksDto.getCodeIdBHornet());
         User currentUser = AuthInterceptor.getCurrentUser();
         Integer currentUserId = currentUser.getId();
+        if (codeAHoney == null || codeAHornet == null || codeBHoney == null || codeBHornet == null) {
+            Asserts.fail(ResultCode.CODE_NOT_EXIST);
+        } else if (codeAHoney.getUserId() != currentUserId || codeAHornet.getUserId() != currentUserId || codeBHoney.getUserId() != currentUserId || codeBHornet.getUserId() != currentUserId) {
+            Asserts.fail(ResultCode.CODE_NOT_BELONG_TO_USER);
+        } else if (!"honey-A".equals(codeAHoney.getType()) || !"hornet-A".equals(codeAHornet.getType()) || !"honey-B".equals(codeBHoney.getType()) || !"hornet-B".equals(codeBHornet.getType()) ) {
+            Asserts.fail(ResultCode.CODE_NOT_CORRESPOND);
+        }
         batchTask.setUserId(currentUserId);
         batchTask.setStatus(BatchTaskStatus.RUNNING.getCode());
         batchTask.setStartTime(new Date());
