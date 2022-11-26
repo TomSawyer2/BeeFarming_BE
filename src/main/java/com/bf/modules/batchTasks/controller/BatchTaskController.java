@@ -46,4 +46,11 @@ public class BatchTaskController {
         StopBatchTaskVo res = batchTaskService.stopBatchTask(batchTaskId);
         return CommonResult.success(res, "停止成功");
     }
+
+    @GetMapping("/testDocker")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult testDocker() {
+        String res = batchTaskService.testDocker();
+        return CommonResult.success(res, "停止成功");
+    }
 }

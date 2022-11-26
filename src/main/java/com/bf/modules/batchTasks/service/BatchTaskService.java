@@ -14,4 +14,5 @@ public interface BatchTaskService extends IService<BatchTask> {
     public RunBatchTasksVo runBatchTasks(RunBatchTasksDto runBatchTasksDto);
     public GetBatchTasksStatusVo getBatchTasksStatus(Integer batchTaskId);
     public StopBatchTaskVo stopBatchTask(Integer batchTaskId);
+    public String testDocker();
 }

@@ -1,5 +1,6 @@
 package com.bf.modules.batchTasks.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
 import com.bf.common.enums.BatchTaskStatus;
@@ -18,6 +19,9 @@ import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
 import com.bf.modules.user.model.User;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Info;
+import com.github.dockerjava.core.DockerClientBuilder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -112,5 +116,13 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         res.setBatchTaskId(batchTaskId);
         res.setStatus(BatchTaskStatus.STOPPED.getCode());
         return res;
+    }
+
+    @Override
+    public String testDocker() {
+        DockerClient dockerClient = DockerClientBuilder.getInstance("tcp://localhost:2375").build();
+        Info info = dockerClient.infoCmd().exec();
+        String infoStr = JSONObject.toJSONString(info);
+        return infoStr;
     }
 }
