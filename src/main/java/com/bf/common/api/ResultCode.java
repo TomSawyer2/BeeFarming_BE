@@ -11,6 +11,7 @@ public enum ResultCode implements ErrorCode {
     BATCH_TASK_NOT_RUNNING(103, "批处理任务未运行"),
     CODE_NOT_CORRESPOND(104, "代码ID与代码类型不匹配"),
     CODE_NOT_BELONG_TO_USER(105, "代码不属于当前用户"),
+    CODE_SAVE_ERR(106, "代码保存失败"),
     VALIDATE_FAILED(1001, "验证失败"),
     UNAUTHORIZED(1002, "未授权"),
     FORBIDDEN(1003, "Forbidden"),

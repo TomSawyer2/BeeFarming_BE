@@ -26,6 +26,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Date;
 
 @Service
@@ -84,6 +86,30 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         } else if (!"honey-A".equals(codeAHoney.getType()) || !"hornet-A".equals(codeAHornet.getType()) || !"honey-B".equals(codeBHoney.getType()) || !"hornet-B".equals(codeBHornet.getType()) ) {
             Asserts.fail(ResultCode.CODE_NOT_CORRESPOND);
         }
+        // 将codeAHoney的保存为文件"codeAHoney.java"
+        try (FileWriter writer = new FileWriter("codeAHoney.java")) {
+            writer.write(codeAHoney.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+        try (FileWriter writer = new FileWriter("codeAHornet.java")) {
+            writer.write(codeAHornet.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+
+        try (FileWriter writer = new FileWriter("codeBHoney.java")) {
+            writer.write(codeBHoney.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+        try (FileWriter writer = new FileWriter("codeBHornet.java")) {
+            writer.write(codeBHornet.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+
+
         batchTask.setUserId(currentUserId);
         batchTask.setStatus(BatchTaskStatus.RUNNING.getCode());
         batchTask.setStartTime(new Date());

@@ -51,6 +51,6 @@ public class BatchTaskController {
     @LoginRequired(needPermission = Permission.USER)
     public CommonResult testDocker() {
         String res = batchTaskService.testDocker();
-        return CommonResult.success(res, "停止成功");
+        return CommonResult.success(res, "获取Docker环境成功");
     }
 }
