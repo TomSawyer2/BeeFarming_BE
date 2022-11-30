@@ -3,6 +3,7 @@ package com.bf.modules.batchTasks.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
+import com.bf.common.docker.MyDockerClient;
 import com.bf.common.enums.BatchTaskStatus;
 import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
@@ -42,6 +43,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    private MyDockerClient myDockerClient;
 
     @Override
     public UploadCodeForBatchTasksVo uploadCode(UploadCodeForBatchTasksDto uploadCodeForBatchTasksDto) {
@@ -130,6 +134,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         } catch(IOException e){
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
+
+        myDockerClient.tryCreateServerContainer(batchTask);
+        myDockerClient.startContainer(batchTask.getContainerId());
 
         RunBatchTasksVo res = new RunBatchTasksVo();
         res.setBatchTaskId(batchTask.getId());

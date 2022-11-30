@@ -86,14 +86,14 @@ public class MyDockerClient {
     }
 
 
-    public void startContainer(String containerId, String tname) {
+    public void startContainer(String containerId) {
         client.startContainerCmd(containerId).exec();
         String statusCmd = "docker inspect " + containerId + " --format='{{.State.Status}}'";
         String codeCmd = "docker inspect " + containerId + " --format='{{.State.ExitCode}}'";
         String s = execRuntimeCmd(statusCmd);
         String s1 = execRuntimeCmd(codeCmd);
-        log.info("{} started container {},status:{}, exitCode{}, now there are {} containers running in total",
-                tname, containerId, s, s1, containersCnt.getAndIncrement());
+        log.info("started container {},status:{}, exitCode{}, now there are {} containers running in total",
+                containerId, s, s1, containersCnt.getAndIncrement());
     }
 
 
