@@ -22,6 +22,8 @@ public class BatchTask {
 
     private Integer status;
 
+    private String containerId;
+
     private Integer codeIdAHoney;
 
     private Integer codeIdAHornet;

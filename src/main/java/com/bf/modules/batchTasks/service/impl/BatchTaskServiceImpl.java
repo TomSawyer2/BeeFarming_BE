@@ -26,6 +26,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
@@ -86,34 +87,50 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         } else if (!"honey-A".equals(codeAHoney.getType()) || !"hornet-A".equals(codeAHornet.getType()) || !"honey-B".equals(codeBHoney.getType()) || !"hornet-B".equals(codeBHornet.getType()) ) {
             Asserts.fail(ResultCode.CODE_NOT_CORRESPOND);
         }
-        // 将codeAHoney的保存为文件"codeAHoney.java"
-        try (FileWriter writer = new FileWriter("codeAHoney.java")) {
-            writer.write(codeAHoney.getContent());
-        } catch(IOException e){
-            Asserts.fail(ResultCode.CODE_SAVE_ERR);
-        }
-        try (FileWriter writer = new FileWriter("codeAHornet.java")) {
-            writer.write(codeAHornet.getContent());
-        } catch(IOException e){
-            Asserts.fail(ResultCode.CODE_SAVE_ERR);
-        }
-
-        try (FileWriter writer = new FileWriter("codeBHoney.java")) {
-            writer.write(codeBHoney.getContent());
-        } catch(IOException e){
-            Asserts.fail(ResultCode.CODE_SAVE_ERR);
-        }
-        try (FileWriter writer = new FileWriter("codeBHornet.java")) {
-            writer.write(codeBHornet.getContent());
-        } catch(IOException e){
-            Asserts.fail(ResultCode.CODE_SAVE_ERR);
-        }
-
 
         batchTask.setUserId(currentUserId);
         batchTask.setStatus(BatchTaskStatus.RUNNING.getCode());
         batchTask.setStartTime(new Date());
         batchTaskMapper.insert(batchTask);
+
+        // 寻找codeFiles文件夹，如果没有就创建
+        String codeFilesPath = "codeFiles";
+        File codeFiles = new File(codeFilesPath);
+        if (!codeFiles.exists()) {
+            codeFiles.mkdir();
+        }
+        // 进入codeFiles文件夹，查找id对应的文件夹，如果没有就创建
+        String codeFilesIdPath = codeFilesPath + "/" + batchTask.getId();
+        File codeFilesId = new File(codeFilesIdPath);
+        if (!codeFilesId.exists()) {
+            codeFilesId.mkdir();
+        }
+        // 将codeAHoney的保存为文件"codeAHoney.java"，放在codeFiles-${id}文件夹中
+        String codeAHoneyPath = codeFilesIdPath + "/codeAHoney.java";
+        try (FileWriter writer = new FileWriter(codeAHoneyPath)) {
+            writer.write(codeAHoney.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+        String codeAHornetPath = codeFilesIdPath + "/codeAHornet.java";
+        try (FileWriter writer = new FileWriter(codeAHornetPath)) {
+            writer.write(codeAHornet.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+        String codeBHoneyPath = codeFilesIdPath + "/codeBHoney.java";
+        try (FileWriter writer = new FileWriter(codeBHoneyPath)) {
+            writer.write(codeBHoney.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+        String codeBHornetPath = codeFilesIdPath + "/codeBHornet.java";
+        try (FileWriter writer = new FileWriter(codeBHornetPath)) {
+            writer.write(codeBHornet.getContent());
+        } catch(IOException e){
+            Asserts.fail(ResultCode.CODE_SAVE_ERR);
+        }
+
         RunBatchTasksVo res = new RunBatchTasksVo();
         res.setBatchTaskId(batchTask.getId());
         res.setTotalRounds(batchTask.getTotalRounds());
