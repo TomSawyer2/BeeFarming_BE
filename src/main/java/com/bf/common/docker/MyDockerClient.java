@@ -44,25 +44,34 @@ public class MyDockerClient {
     /**
      * create container
      */
-    public void tryCreateServerContainer(BatchTask batchTask) {
+    public void tryCreateServerContainer(BatchTask batchTask, String upperOutputFilename, String downOutputFilename) {
         if (batchTask.getContainerId() != null && !batchTask.getContainerId().equals("")) {
             return;
         }
         String containerName = "BF-" + batchTask.getId();
 
         // 将id对应的文件夹复制到容器中
-        String containerPath = "/codeFiles/" + batchTask.getId();
+        String containerPath = "/home/game/code";
         String hostPath = "/home/bf/codeFiles/" + batchTask.getId();
         Bind bind = new Bind(hostPath, new Volume(containerPath));
+        // 将/result文件夹映射
+        String resultPath = "/home/game/Result";
+        String hostResultPath = "/home/bf/codeFiles/" + batchTask.getId() + "/Result";
+        Bind bindResult = new Bind(hostResultPath, new Volume(resultPath));
 
         HostConfig hostConfig = new HostConfig()
                 .withPidsLimit(MAX_PIDS_NUM)
                 .withCpuCount(CONTAINER_CPU_COUNT)
                 .withMemory(CONTAINER_MEMORY * 1024 * 1024)
-                .withBinds(bind);
+                .withBinds(bind)
+                .withBinds(bindResult);
 
         CreateContainerResponse response = client.createContainerCmd(CONTAINER_IMAGE_NAME)
                 .withName(containerName)
+                .withEnv("BF_ID=" + batchTask.getId())
+                .withEnv("totalRound=" + batchTask.getTotalRounds())
+                .withEnv("upperOutputFilename=" + upperOutputFilename)
+                .withEnv("downOutputFilename=" + downOutputFilename)
                 .withHostConfig(hostConfig)
                 .exec();
 

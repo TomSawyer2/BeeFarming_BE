@@ -47,4 +47,6 @@ public class BatchTask {
     private java.util.Date startTime;
 
     private java.util.Date endTime;
+
+    private Integer timeout;
 }

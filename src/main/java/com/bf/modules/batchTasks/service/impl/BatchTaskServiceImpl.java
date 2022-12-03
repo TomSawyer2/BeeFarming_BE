@@ -1,6 +1,5 @@
 package com.bf.modules.batchTasks.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
 import com.bf.common.docker.MyDockerClient;
@@ -20,11 +19,9 @@ import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
 import com.bf.modules.user.model.User;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.core.DockerClientBuilder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -135,8 +132,14 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
 
-        myDockerClient.tryCreateServerContainer(batchTask);
+        myDockerClient.tryCreateServerContainer(batchTask, "output-upper", "output-down");
         myDockerClient.startContainer(batchTask.getContainerId());
+
+        try {
+            monitorContainer(batchTask);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
 
         RunBatchTasksVo res = new RunBatchTasksVo();
         res.setBatchTaskId(batchTask.getId());
@@ -168,11 +171,50 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         return res;
     }
 
-    @Override
-    public String testDocker() {
-        DockerClient dockerClient = DockerClientBuilder.getInstance("tcp://localhost:2375").build();
-        Info info = dockerClient.infoCmd().exec();
-        String infoStr = JSONObject.toJSONString(info);
-        return infoStr;
+    @Async
+    public void monitorContainer(BatchTask batchTask) {
+        String status = "";
+        String exitCode = "";
+        boolean isExited = false;
+        long begin = System.currentTimeMillis();
+
+        try {
+            while (true) {
+                status = myDockerClient.inspectStatus(batchTask.getContainerId());
+                isExited = "'exited'".equals(status);
+                if (isExited) {
+                    exitCode = myDockerClient.inspectExitCode(batchTask.getContainerId());
+                    break;
+                } else {
+                    long cur = System.currentTimeMillis();
+                    if (cur - begin > batchTask.getTimeout() * 60 * 1000) {
+                        myDockerClient.stopContainer(batchTask.getContainerId());
+                        batchTask.setEndTime(new Date());
+                        batchTask.setStatus(BatchTaskStatus.TIMEOUT.getCode());
+                        batchTaskMapper.updateById(batchTask);
+                    }
+                    Thread.sleep(1000);
+                }
+            }
+            if (isExited) {
+                if ("'0'".equals(exitCode)) {
+                    // todo 分析/codeFiles/{id}/Result里面的两个文件
+                } else {
+                    // 报错退出处理
+                    batchTask.setEndTime(new Date());
+                    batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
+                    batchTaskMapper.updateById(batchTask);
+                }
+            } else {
+                // 报错退出处理
+                batchTask.setEndTime(new Date());
+                batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
+                batchTaskMapper.updateById(batchTask);
+            }
+        } catch(Exception e) {
+            batchTask.setEndTime(new Date());
+            batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
+            batchTaskMapper.updateById(batchTask);
+        }
     }
 }
