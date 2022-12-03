@@ -13,7 +13,6 @@ import com.bf.modules.batchTasks.mapper.BatchTaskMapper;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
 import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
-import com.bf.modules.batchTasks.vo.RunBatchTasksVo;
 import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
 import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import com.bf.modules.code.mapper.CodeMapper;
@@ -72,7 +71,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     }
 
     @Override
-    public RunBatchTasksVo runBatchTasks(RunBatchTasksDto runBatchTasksDto) {
+    public BatchTask runBatchTasks(RunBatchTasksDto runBatchTasksDto) {
         BatchTask batchTask = new BatchTask();
         BeanUtils.copyProperties(runBatchTasksDto, batchTask);
         Code codeAHoney = codeMapper.selectById(runBatchTasksDto.getCodeIdAHoney());
@@ -135,16 +134,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         myDockerClient.tryCreateServerContainer(batchTask, "output-upper", "output-down");
         myDockerClient.startContainer(batchTask.getContainerId());
 
-        try {
-            monitorContainer(batchTask);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-
-        RunBatchTasksVo res = new RunBatchTasksVo();
-        res.setBatchTaskId(batchTask.getId());
-        res.setTotalRounds(batchTask.getTotalRounds());
-        return res;
+        return batchTask;
     }
 
     @Override

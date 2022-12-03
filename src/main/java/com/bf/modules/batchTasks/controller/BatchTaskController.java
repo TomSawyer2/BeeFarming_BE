@@ -5,9 +5,9 @@ import com.bf.common.api.CommonResult;
 import com.bf.common.enums.Permission;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
+import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
 import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
-import com.bf.modules.batchTasks.vo.RunBatchTasksVo;
 import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
 import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,8 @@ public class BatchTaskController {
     @PostMapping("/run")
     @LoginRequired(needPermission = Permission.USER)
     public CommonResult runBatchTasks(@RequestBody RunBatchTasksDto runBatchTasksDto) {
-        RunBatchTasksVo res = batchTaskService.runBatchTasks(runBatchTasksDto);
+        BatchTask res = batchTaskService.runBatchTasks(runBatchTasksDto);
+        batchTaskService.monitorContainer(res);
         return CommonResult.success(res, "开始运行");
     }
 
