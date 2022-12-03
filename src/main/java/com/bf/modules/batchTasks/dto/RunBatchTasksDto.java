@@ -22,4 +22,6 @@ public class RunBatchTasksDto {
 
     @NotBlank
     private Integer totalRounds;
+
+    private Integer timeout;
 }

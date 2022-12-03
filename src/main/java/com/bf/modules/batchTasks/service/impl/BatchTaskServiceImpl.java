@@ -188,7 +188,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                 } else {
                     long cur = System.currentTimeMillis();
                     if (cur - begin > batchTask.getTimeout() * 60 * 1000) {
-                        myDockerClient.stopContainer(batchTask.getContainerId());
+                        myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                         batchTask.setEndTime(new Date());
                         batchTask.setStatus(BatchTaskStatus.TIMEOUT.getCode());
                         batchTaskMapper.updateById(batchTask);
@@ -199,19 +199,23 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
                     // todo 分析/codeFiles/{id}/Result里面的两个文件
+                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                 } else {
+                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                     // 报错退出处理
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
                     batchTaskMapper.updateById(batchTask);
                 }
             } else {
+                myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                 // 报错退出处理
                 batchTask.setEndTime(new Date());
                 batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
                 batchTaskMapper.updateById(batchTask);
             }
         } catch(Exception e) {
+            myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
             batchTask.setEndTime(new Date());
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
             batchTaskMapper.updateById(batchTask);
