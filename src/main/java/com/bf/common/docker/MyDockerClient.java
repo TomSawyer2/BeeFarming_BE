@@ -52,11 +52,11 @@ public class MyDockerClient {
 
         // 将id对应的文件夹复制到容器中
         String containerPath = "/home/game/code";
-        String hostPath = "/home/bf/codeFiles/" + batchTask.getId();
+        String hostPath = "/home/ubuntu/BF/codeFiles/" + batchTask.getId();
         Bind bind = new Bind(hostPath, new Volume(containerPath));
         // 将/result文件夹映射
         String resultPath = "/home/game/Result";
-        String hostResultPath = "/home/bf/codeFiles/" + batchTask.getId() + "/Result";
+        String hostResultPath = "/home/ubuntu/BF/codeFiles/" + batchTask.getId() + "/Result";
         Bind bindResult = new Bind(hostResultPath, new Volume(resultPath));
 
         HostConfig hostConfig = new HostConfig()
