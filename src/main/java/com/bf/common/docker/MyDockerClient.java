@@ -69,7 +69,7 @@ public class MyDockerClient {
                 .withName(containerName)
                 .withEnv("BF_ID=" + batchTask.getId())
                 .withEnv("totalRound=" + batchTask.getTotalRounds())
-                .withEnv("upperOutputFilename=" + upperOutputFilename)
+                .withEnv("upperOutputFilename=" + "OUTPUT-UPPER")
                 .withEnv("downOutputFilename=" + downOutputFilename)
                 .withHostConfig(hostConfig)
                 .exec();
