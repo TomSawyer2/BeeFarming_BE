@@ -190,22 +190,25 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                 if ("'0'".equals(exitCode)) {
                     // todo 分析/codeFiles/{id}/Result里面的两个文件
                     myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+                    batchTask.setEndTime(new Date());
+                    batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
+                    batchTaskMapper.updateById(batchTask);
                 } else {
-                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+                    myDockerClient.stopContainer(batchTask.getContainerId());
                     // 报错退出处理
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
                     batchTaskMapper.updateById(batchTask);
                 }
             } else {
-                myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+                myDockerClient.stopContainer(batchTask.getContainerId());
                 // 报错退出处理
                 batchTask.setEndTime(new Date());
                 batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
                 batchTaskMapper.updateById(batchTask);
             }
         } catch(Exception e) {
-            myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+            myDockerClient.stopContainer(batchTask.getContainerId());
             batchTask.setEndTime(new Date());
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
             batchTaskMapper.updateById(batchTask);
