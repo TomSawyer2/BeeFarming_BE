@@ -18,6 +18,7 @@ import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
 import com.bf.modules.user.model.User;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -188,7 +189,18 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             }
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
-                    // todo 分析/codeFiles/{id}/Result里面的两个文件
+                    // 将分析/codeFiles/{id}/Result里面的文件拷贝到/archiveResults/{id}
+                    String resultPath = "codeFiles/" + batchTask.getId() + "/Result";
+                    String archiveResultPath = "archiveResults/" + batchTask.getId();
+                    File result = new File(resultPath);
+                    File archiveResult = new File(archiveResultPath);
+                    if (!archiveResult.exists()) {
+                        archiveResult.mkdir();
+                    }
+                    FileUtils.copyDirectory(result, archiveResult);
+                    // 删除/codeFiles/{id}/Result文件夹
+                    FileUtils.deleteDirectory(result);
+                    
                     myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
