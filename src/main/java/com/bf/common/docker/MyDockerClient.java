@@ -63,8 +63,7 @@ public class MyDockerClient {
                 .withPidsLimit(MAX_PIDS_NUM)
                 .withCpuCount(CONTAINER_CPU_COUNT)
                 .withMemory(CONTAINER_MEMORY * 1024 * 1024)
-                .withBinds(bind)
-                .withBinds(bindResult);
+                .withBinds(bind, bindResult);
 
         CreateContainerResponse response = client.createContainerCmd(CONTAINER_IMAGE_NAME)
                 .withName(containerName)
