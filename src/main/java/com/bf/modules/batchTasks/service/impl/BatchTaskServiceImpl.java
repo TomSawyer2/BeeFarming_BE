@@ -106,6 +106,16 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         if (!codeFilesId.exists()) {
             codeFilesId.mkdir();
         }
+        String archiveResultsPath = "archiveResults";
+        File archiveResults = new File(archiveResultsPath);
+        if (!archiveResults.exists()) {
+            archiveResults.mkdir();
+        }
+        String archiveResultsIdPath = archiveResultsPath + "/" + batchTask.getId();
+        File archiveResultsId = new File(archiveResultsIdPath);
+        if (!archiveResultsId.exists()) {
+            archiveResultsId.mkdir();
+        }
         // 将codeAHoney的保存为文件"codeAHoney.java"，放在codeFiles-${id}文件夹中
         String codeAHoneyPath = codeFilesIdPath + "/codeAHoney.java";
         try (FileWriter writer = new FileWriter(codeAHoneyPath)) {
@@ -189,19 +199,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             }
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
-                    // 将分析/codeFiles/{id}/Result里面的文件拷贝到/archiveResults/{id}
-                    String resultPath = "codeFiles/" + batchTask.getId() + "/Result";
-                    String archiveResultPath = "archiveResults/" + batchTask.getId();
-                    File result = new File(resultPath);
-                    File archiveResult = new File(archiveResultPath);
-                    if (!archiveResult.exists()) {
-                        archiveResult.mkdir();
-                    }
-                    FileUtils.copyDirectory(result, archiveResult);
-                    // 删除/codeFiles/{id}/Result文件夹
-                    FileUtils.deleteDirectory(result);
-                    
-                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+                    myDockerClient.stopContainer(batchTask.getContainerId());
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
                     batchTaskMapper.updateById(batchTask);

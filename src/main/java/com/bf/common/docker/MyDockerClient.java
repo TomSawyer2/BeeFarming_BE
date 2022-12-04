@@ -54,9 +54,9 @@ public class MyDockerClient {
         String containerPath = "/home/game/code";
         String hostPath = "/home/ubuntu/BF/codeFiles/" + batchTask.getId();
         Bind bind = new Bind(hostPath, new Volume(containerPath));
-        // 将/result文件夹映射
+        // 将/Result文件夹映射
         String resultPath = "/home/game/Result";
-        String hostResultPath = "/home/ubuntu/BF/codeFiles/" + batchTask.getId() + "/Result";
+        String hostResultPath = "/home/ubuntu/BF/archiveResults/" + batchTask.getId();
         Bind bindResult = new Bind(hostResultPath, new Volume(resultPath));
 
         HostConfig hostConfig = new HostConfig()
