@@ -67,10 +67,7 @@ public class MyDockerClient {
 
         CreateContainerResponse response = client.createContainerCmd(CONTAINER_IMAGE_NAME)
                 .withName(containerName)
-                .withEnv("BF_ID=" + batchTask.getId())
-                .withEnv("totalRound=" + batchTask.getTotalRounds())
-                .withEnv("upperOutputFilename=" + "OUTPUT-UPPER")
-                .withEnv("downOutputFilename=" + downOutputFilename)
+                .withEnv("BF_ID=" + batchTask.getId(), "totalRound=" + batchTask.getTotalRounds(), "upperOutputFilename=" + upperOutputFilename, "downOutputFilename=" + downOutputFilename)
                 .withHostConfig(hostConfig)
                 .exec();
 
