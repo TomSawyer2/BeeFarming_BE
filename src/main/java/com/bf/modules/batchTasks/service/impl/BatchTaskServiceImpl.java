@@ -6,6 +6,7 @@ import com.bf.common.docker.MyDockerClient;
 import com.bf.common.enums.BatchTaskStatus;
 import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
+import com.bf.common.service.RedisService;
 import com.bf.common.util.JwtUtils;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
@@ -24,9 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Date;
 
 @Service
@@ -40,6 +39,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    RedisService redisService;
 
     @Autowired
     private MyDockerClient myDockerClient;
@@ -187,27 +189,46 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                     exitCode = myDockerClient.inspectExitCode(batchTask.getContainerId());
                     break;
                 } else {
+                    int currentRound = 0;
+                    if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
+                        currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
+                    }
                     long cur = System.currentTimeMillis();
                     if (cur - begin > batchTask.getTimeout() * 60 * 1000) {
+                        // 超时逻辑
                         myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                         batchTask.setEndTime(new Date());
                         batchTask.setStatus(BatchTaskStatus.TIMEOUT.getCode());
+                        batchTask.setCurrentRound(currentRound);
                         batchTaskMapper.updateById(batchTask);
                     }
+
+                    if (redisService.containsKey(String.valueOf(batchTask.getId()))) {
+                        batchTask.setCurrentRound(currentRound);
+                        // 更新batchTask的roundInfo
+                        batchTaskMapper.updateById(batchTask);
+                    }
+
                     Thread.sleep(1000);
                 }
+            }
+            int currentRound = 0;
+            if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
+                currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
             }
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
                     myDockerClient.stopContainer(batchTask.getContainerId());
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
+                    batchTask.setCurrentRound(currentRound);
                     batchTaskMapper.updateById(batchTask);
                 } else {
                     myDockerClient.stopContainer(batchTask.getContainerId());
                     // 报错退出处理
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
+                    batchTask.setCurrentRound(currentRound);
                     batchTaskMapper.updateById(batchTask);
                 }
             } else {
@@ -215,6 +236,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                 // 报错退出处理
                 batchTask.setEndTime(new Date());
                 batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
+                batchTask.setCurrentRound(currentRound);
                 batchTaskMapper.updateById(batchTask);
             }
         } catch(Exception e) {
