@@ -156,6 +156,11 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
         GetBatchTasksStatusVo res = new GetBatchTasksStatusVo();
         BeanUtils.copyProperties(batchTask, res);
+        int currentRound = res.getCurrentRound();
+        if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
+            currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
+            res.setCurrentRound(currentRound);
+        }
         res.setBatchTaskId(batchTaskId);
         return res;
     }
