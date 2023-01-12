@@ -44,9 +44,9 @@ public class MyDockerClient {
     /**
      * create container
      */
-    public void tryCreateServerContainer(BatchTask batchTask, String upperOutputFilename, String downOutputFilename) {
+    public String tryCreateServerContainer(BatchTask batchTask, String upperOutputFilename, String downOutputFilename) {
         if (batchTask.getContainerId() != null && !batchTask.getContainerId().equals("")) {
-            return;
+            return "";
         }
         String containerName = "BF-" + batchTask.getId();
 
@@ -70,10 +70,9 @@ public class MyDockerClient {
                 .withEnv("BF_ID=" + batchTask.getId(), "totalRound=" + batchTask.getTotalRounds(), "upperOutputFilename=" + upperOutputFilename, "downOutputFilename=" + downOutputFilename)
                 .withHostConfig(hostConfig)
                 .exec();
-
-        batchTask.setContainerId(response.getId());
         log.info("created container {}", containerName);
-
+        String containerId = response.getId();
+        return containerId;
     }
 
     /**

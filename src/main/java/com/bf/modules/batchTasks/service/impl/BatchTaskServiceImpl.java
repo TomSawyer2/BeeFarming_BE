@@ -144,8 +144,10 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
 
-        myDockerClient.tryCreateServerContainer(batchTask, "output-upper", "output-down");
-        myDockerClient.startContainer(batchTask.getContainerId());
+        String containerId = myDockerClient.tryCreateServerContainer(batchTask, "output-upper", "output-down");
+        myDockerClient.startContainer(containerId);
+        batchTask.setContainerId(containerId);
+        batchTaskMapper.updateById(batchTask);
 
         return batchTask;
     }
@@ -170,12 +172,13 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         BatchTask batchTask = batchTaskMapper.selectById(batchTaskId);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
         if (batchTask.getStatus() != BatchTaskStatus.RUNNING.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_RUNNING);
-        batchTask.setStatus(BatchTaskStatus.STOPPED.getCode());
+        myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+        batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
         batchTask.setEndTime(new Date());
         batchTaskMapper.updateById(batchTask);
         StopBatchTaskVo res = new StopBatchTaskVo();
         res.setBatchTaskId(batchTaskId);
-        res.setStatus(BatchTaskStatus.STOPPED.getCode());
+        res.setStatus(BatchTaskStatus.FAILED.getCode());
         return res;
     }
 
@@ -223,13 +226,13 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             }
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
-                    myDockerClient.stopContainer(batchTask.getContainerId());
+                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
                     batchTask.setCurrentRound(currentRound);
                     batchTaskMapper.updateById(batchTask);
                 } else {
-                    myDockerClient.stopContainer(batchTask.getContainerId());
+                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                     // 报错退出处理
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
@@ -237,7 +240,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                     batchTaskMapper.updateById(batchTask);
                 }
             } else {
-                myDockerClient.stopContainer(batchTask.getContainerId());
+                myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                 // 报错退出处理
                 batchTask.setEndTime(new Date());
                 batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
@@ -245,7 +248,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                 batchTaskMapper.updateById(batchTask);
             }
         } catch(Exception e) {
-            myDockerClient.stopContainer(batchTask.getContainerId());
+            myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
             batchTask.setEndTime(new Date());
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
             batchTaskMapper.updateById(batchTask);

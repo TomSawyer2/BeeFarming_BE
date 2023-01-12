@@ -5,8 +5,7 @@ public enum BatchTaskStatus {
     RUNNING(1, "运行中"),
     FINISHED(2, "已完成"),
     FAILED(3, "失败"),
-    TIMEOUT(4, "超时"),
-    STOPPED(5, "已停止");
+    TIMEOUT(4, "超时");
 
     private final int code;
     private final String description;

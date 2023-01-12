@@ -3,9 +3,7 @@ package com.bf.modules.batchTasks.controller;
 import com.bf.common.annotation.LoginRequired;
 import com.bf.common.api.CommonResult;
 import com.bf.common.enums.Permission;
-import com.bf.common.service.RedisService;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
-import com.bf.modules.batchTasks.dto.TestRedisDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
@@ -21,8 +19,6 @@ public class BatchTaskController {
     @Autowired
     BatchTaskService batchTaskService;
 
-    @Autowired
-    RedisService redisService;
 
     @PostMapping("/uploadCodeForBatchTasks")
     @LoginRequired(needPermission = Permission.USER)
@@ -53,10 +49,4 @@ public class BatchTaskController {
         return CommonResult.success(res, "停止成功");
     }
 
-    @PostMapping("/testRedis")
-    public CommonResult testRedis(@RequestBody TestRedisDto testRedisDto) {
-        redisService.cacheValue("testKey", "testVal");
-        String output = redisService.getValue(testRedisDto.getKey());
-        return CommonResult.success(output, "查询成功");
-    }
 }
