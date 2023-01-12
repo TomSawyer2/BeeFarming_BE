@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
+import com.bf.common.enums.BatchTaskStatus;
 import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
 import com.bf.common.util.JwtUtils;
+import com.bf.modules.batchTasks.mapper.BatchTaskMapper;
+import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.user.dto.LoginDto;
 import com.bf.modules.user.dto.RegisterDto;
 import com.bf.modules.user.mapper.UserMapper;
@@ -18,11 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Autowired
     UserMapper userMapper;
+
+    @Autowired
+    BatchTaskMapper batchTaskMapper;
 
     @Autowired
     JwtUtils jwtUtils;
@@ -65,8 +73,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public GetUserInfoVo getUserInfo() {
         User user = AuthInterceptor.getCurrentUser();
         if (user == null) Asserts.fail(ResultCode.USER_NOT_EXIST);
+
         GetUserInfoVo getUserInfoVo = new GetUserInfoVo();
         BeanUtils.copyProperties(user, getUserInfoVo);
+
+        // select * from batch_task where user_id = ? and status = 1
+        LambdaQueryWrapper<BatchTask> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BatchTask::getUserId, user.getId());
+        queryWrapper.eq(BatchTask::getStatus, BatchTaskStatus.RUNNING.getCode());
+        List<BatchTask> batchTasks = batchTaskMapper.selectList(queryWrapper);
+        if (batchTasks.size() > 0) {
+            getUserInfoVo.setBatchTaskId(batchTasks.get(0).getId());
+        }
+
         return getUserInfoVo;
     }
 }

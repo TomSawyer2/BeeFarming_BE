@@ -18,4 +18,6 @@ public class GetUserInfoVo {
     @NotBlank
     private Integer status;
 
+    private Integer batchTaskId;
+
 }
