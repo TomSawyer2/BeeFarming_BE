@@ -1,9 +1,11 @@
 package com.bf.modules.batchTasks.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
 import com.bf.common.docker.MyDockerClient;
 import com.bf.common.enums.BatchTaskStatus;
+import com.bf.common.enums.UserStatus;
 import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
 import com.bf.common.service.RedisService;
@@ -13,11 +15,13 @@ import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.mapper.BatchTaskMapper;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
+import com.bf.modules.batchTasks.vo.GetBatchTasksResultVo;
 import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
 import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
 import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
 import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
+import com.bf.modules.user.mapper.UserMapper;
 import com.bf.modules.user.model.User;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.BeanUtils;
@@ -26,7 +30,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask> implements BatchTaskService {
@@ -36,6 +44,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
     @Autowired
     CodeMapper codeMapper;
+
+    @Autowired
+    UserMapper userMapper;
 
     @Autowired
     JwtUtils jwtUtils;
@@ -75,14 +86,24 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
     @Override
     public BatchTask runBatchTasks(RunBatchTasksDto runBatchTasksDto) {
+        User currentUser = AuthInterceptor.getCurrentUser();
+        Integer currentUserId = currentUser.getId();
+        // select * from batch_task where user_id = ? and status = 1
+        LambdaQueryWrapper<BatchTask> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BatchTask::getUserId, currentUser.getId());
+        queryWrapper.eq(BatchTask::getStatus, BatchTaskStatus.RUNNING.getCode());
+        List<BatchTask> batchTasks = batchTaskMapper.selectList(queryWrapper);
+        if (batchTasks.size() > 0) {
+            Asserts.fail(ResultCode.USER_TASK_RUNNING);
+        }
+
         BatchTask batchTask = new BatchTask();
         BeanUtils.copyProperties(runBatchTasksDto, batchTask);
         Code codeAHoney = codeMapper.selectById(runBatchTasksDto.getCodeIdAHoney());
         Code codeAHornet = codeMapper.selectById(runBatchTasksDto.getCodeIdAHornet());
         Code codeBHoney = codeMapper.selectById(runBatchTasksDto.getCodeIdBHoney());
         Code codeBHornet = codeMapper.selectById(runBatchTasksDto.getCodeIdBHornet());
-        User currentUser = AuthInterceptor.getCurrentUser();
-        Integer currentUserId = currentUser.getId();
+
         if (codeAHoney == null || codeAHornet == null || codeBHoney == null || codeBHornet == null) {
             Asserts.fail(ResultCode.CODE_NOT_EXIST);
         } else if (codeAHoney.getUserId() != currentUserId || codeAHornet.getUserId() != currentUserId || codeBHoney.getUserId() != currentUserId || codeBHornet.getUserId() != currentUserId) {
@@ -149,6 +170,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         batchTask.setContainerId(containerId);
         batchTaskMapper.updateById(batchTask);
 
+        currentUser.setStatus(UserStatus.TASK_RUNNING.getCode());
+        userMapper.updateById(currentUser);
+
         return batchTask;
     }
 
@@ -179,6 +203,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         StopBatchTaskVo res = new StopBatchTaskVo();
         res.setBatchTaskId(batchTaskId);
         res.setStatus(BatchTaskStatus.FAILED.getCode());
+        User user = userMapper.selectById(AuthInterceptor.getCurrentUser().getId());
+        user.setStatus(UserStatus.IDLE.getCode());
+        userMapper.updateById(user);
         return res;
     }
 
@@ -227,6 +254,17 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             if (isExited) {
                 if ("'0'".equals(exitCode)) {
                     myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
+
+                    String upperResultPath = "/home/ubuntu/BF/archiveResults/" + batchTask.getId() + "/output-upper";
+                    List<String> linesUpper = Files.readAllLines(Paths.get(upperResultPath), StandardCharsets.UTF_8);
+                    String upperResult = String.join(",", linesUpper);
+                    String downResultPath = "/home/ubuntu/BF/archiveResults/" + batchTask.getId() + "/output-down";
+                    List<String> linesLower = Files.readAllLines(Paths.get(downResultPath), StandardCharsets.UTF_8);
+                    String lowerResult = String.join(",", linesLower);
+
+                    batchTask.setUpperGoals(upperResult);
+                    batchTask.setLowerGoals(lowerResult);
+
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
                     batchTask.setCurrentRound(currentRound);
@@ -253,5 +291,21 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
             batchTaskMapper.updateById(batchTask);
         }
+
+        User user = userMapper.selectById(AuthInterceptor.getCurrentUser().getId());
+        user.setStatus(UserStatus.IDLE.getCode());
+        userMapper.updateById(user);
+
+    }
+
+    @Override
+    public GetBatchTasksResultVo getBatchTasksResult(int id) {
+        BatchTask batchTask = batchTaskMapper.selectById(id);
+        if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
+        if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
+        GetBatchTasksResultVo res = new GetBatchTasksResultVo();
+        BeanUtils.copyProperties(batchTask, res);
+        return res;
     }
 }

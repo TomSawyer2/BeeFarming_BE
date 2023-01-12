@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
 import com.bf.common.exception.Asserts;
+import com.bf.common.interceptor.AuthInterceptor;
 import com.bf.common.util.JwtUtils;
 import com.bf.modules.user.dto.LoginDto;
 import com.bf.modules.user.dto.RegisterDto;
 import com.bf.modules.user.mapper.UserMapper;
 import com.bf.modules.user.model.User;
 import com.bf.modules.user.service.UserService;
+import com.bf.modules.user.vo.GetUserInfoVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,5 +59,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
         return null;
+    }
+
+    @Override
+    public GetUserInfoVo getUserInfo() {
+        User user = AuthInterceptor.getCurrentUser();
+        if (user == null) Asserts.fail(ResultCode.USER_NOT_EXIST);
+        GetUserInfoVo getUserInfoVo = new GetUserInfoVo();
+        BeanUtils.copyProperties(user, getUserInfoVo);
+        return getUserInfoVo;
     }
 }

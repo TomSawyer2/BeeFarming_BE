@@ -1,6 +1,8 @@
 package com.bf.modules.user.controller;
 
+import com.bf.common.annotation.LoginRequired;
 import com.bf.common.api.CommonResult;
+import com.bf.common.enums.Permission;
 import com.bf.modules.user.dto.LoginDto;
 import com.bf.modules.user.dto.RegisterDto;
 import com.bf.modules.user.service.UserService;
@@ -27,5 +29,11 @@ public class UserController {
     @PostMapping("/login")
     public CommonResult login(@RequestBody LoginDto loginDto) {
         return CommonResult.success(userService.login(loginDto), "登录成功");
+    }
+
+    @GetMapping("/userInfo")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult getUserInfo() {
+        return CommonResult.success(userService.getUserInfo(), "获取用户信息成功");
     }
 }

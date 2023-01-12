@@ -7,6 +7,7 @@ import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
+import com.bf.modules.batchTasks.vo.GetBatchTasksResultVo;
 import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
 import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
 import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
@@ -47,6 +48,13 @@ public class BatchTaskController {
     public CommonResult stopBatchTask(@RequestParam Integer batchTaskId) {
         StopBatchTaskVo res = batchTaskService.stopBatchTask(batchTaskId);
         return CommonResult.success(res, "停止成功");
+    }
+
+    @GetMapping("/result")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult getBatchTasksResult(@RequestParam Integer batchTaskId) {
+        GetBatchTasksResultVo res = batchTaskService.getBatchTasksResult(batchTaskId);
+        return CommonResult.success(res, "获取结果成功");
     }
 
 }
