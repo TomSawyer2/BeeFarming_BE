@@ -3,11 +3,13 @@ package com.bf.modules.batchTasks.controller;
 import com.bf.common.annotation.LoginRequired;
 import com.bf.common.api.CommonResult;
 import com.bf.common.enums.Permission;
+import com.bf.modules.admin.vo.GetCodeForAdminVo;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
 import com.bf.modules.batchTasks.vo.*;
+import com.bf.modules.code.model.Code;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,6 +63,20 @@ public class BatchTaskController {
     public CommonResult getBatchTasksHistory(@RequestParam Integer page, @RequestParam Integer pageSize) {
         GetBatchTasksHistoryVo res = batchTaskService.getBatchTasksHistory(page, pageSize);
         return CommonResult.success(res, "获取历史成功");
+    }
+
+    @GetMapping("/myCodeList")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult getCodeByUser(@RequestParam Integer page, @RequestParam Integer pageSize) {
+        GetCodeForAdminVo res = batchTaskService.getCodeByUser(page, pageSize);
+        return CommonResult.success(res, "获取代码成功");
+    }
+
+    @GetMapping("/codes")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult getCodesByIds(@RequestParam List<Integer> id) {
+        List<Code> res = batchTaskService.getCodesByIds(id);
+        return CommonResult.success(res, "获取代码成功");
     }
 
 }

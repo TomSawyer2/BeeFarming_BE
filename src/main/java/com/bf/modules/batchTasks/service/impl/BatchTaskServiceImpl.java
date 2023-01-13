@@ -12,6 +12,7 @@ import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
 import com.bf.common.service.RedisService;
 import com.bf.common.util.JwtUtils;
+import com.bf.modules.admin.vo.GetCodeForAdminVo;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.mapper.BatchTaskMapper;
@@ -22,16 +23,19 @@ import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
 import com.bf.modules.user.mapper.UserMapper;
 import com.bf.modules.user.model.User;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -55,6 +59,8 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
     @Autowired
     private MyDockerClient myDockerClient;
+
+    private static final Logger log = LoggerFactory.getLogger(MyDockerClient.class);
 
     @Override
     public UploadCodeForBatchTasksVo uploadCode(UploadCodeForBatchTasksDto uploadCodeForBatchTasksDto) {
@@ -321,6 +327,39 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         res.setPageSize(pageSize);
         res.setTotal((int) batchTaskPage.getTotal());
         res.setBatchTasks(batchTasks);
+        return res;
+    }
+
+    @Override
+    public GetCodeForAdminVo getCodeByUser(int page, int pageSize) {
+        Page<Code> codePage = new Page<>(page, pageSize);
+        QueryWrapper<Code> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", AuthInterceptor.getCurrentUser().getId());
+        queryWrapper.orderByDesc("id");
+        codeMapper.selectPage(codePage, queryWrapper);
+        List<Code> codes = codePage.getRecords();
+        GetCodeForAdminVo res = new GetCodeForAdminVo();
+        res.setPage(page);
+        res.setPageSize(pageSize);
+        res.setTotal((int) codePage.getTotal());
+        res.setCodeList(codes);
+        return res;
+    }
+
+    @Override
+    public List<Code> getCodesByIds(List<Integer> ids) {
+        if (ids.size() > 4) {
+            // 取前4个
+            ids = ids.subList(0, 4);
+        }
+        List<Code> codes = codeMapper.selectBatchIds(ids);
+        // 筛选出当前用户的code
+        List<Code> res = new ArrayList<>();
+        for (Code code : codes) {
+            if (code.getUserId() == AuthInterceptor.getCurrentUser().getId()) {
+                res.add(code);
+            }
+        }
         return res;
     }
 }
