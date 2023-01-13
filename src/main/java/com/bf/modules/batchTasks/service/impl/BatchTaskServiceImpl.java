@@ -1,6 +1,8 @@
 package com.bf.modules.batchTasks.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bf.common.api.ResultCode;
 import com.bf.common.docker.MyDockerClient;
@@ -15,10 +17,7 @@ import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.mapper.BatchTaskMapper;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
-import com.bf.modules.batchTasks.vo.GetBatchTasksResultVo;
-import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
-import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
-import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
+import com.bf.modules.batchTasks.vo.*;
 import com.bf.modules.code.mapper.CodeMapper;
 import com.bf.modules.code.model.Code;
 import com.bf.modules.user.mapper.UserMapper;
@@ -306,6 +305,22 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
         GetBatchTasksResultVo res = new GetBatchTasksResultVo();
         BeanUtils.copyProperties(batchTask, res);
+        return res;
+    }
+
+    @Override
+    public GetBatchTasksHistoryVo getBatchTasksHistory(int page, int pageSize) {
+        Page<BatchTask> batchTaskPage = new Page<>(page, pageSize);
+        QueryWrapper<BatchTask> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", AuthInterceptor.getCurrentUser().getId());
+        queryWrapper.orderByDesc("id");
+        batchTaskMapper.selectPage(batchTaskPage, queryWrapper);
+        List<BatchTask> batchTasks = batchTaskPage.getRecords();
+        GetBatchTasksHistoryVo res = new GetBatchTasksHistoryVo();
+        res.setPage(page);
+        res.setPageSize(pageSize);
+        res.setTotal((int) batchTaskPage.getTotal());
+        res.setBatchTasks(batchTasks);
         return res;
     }
 }

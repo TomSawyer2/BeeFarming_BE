@@ -7,12 +7,11 @@ import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
-import com.bf.modules.batchTasks.vo.GetBatchTasksResultVo;
-import com.bf.modules.batchTasks.vo.GetBatchTasksStatusVo;
-import com.bf.modules.batchTasks.vo.StopBatchTaskVo;
-import com.bf.modules.batchTasks.vo.UploadCodeForBatchTasksVo;
+import com.bf.modules.batchTasks.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/batchTasks")
@@ -55,6 +54,13 @@ public class BatchTaskController {
     public CommonResult getBatchTasksResult(@RequestParam Integer batchTaskId) {
         GetBatchTasksResultVo res = batchTaskService.getBatchTasksResult(batchTaskId);
         return CommonResult.success(res, "获取结果成功");
+    }
+
+    @GetMapping("/history")
+    @LoginRequired(needPermission = Permission.USER)
+    public CommonResult getBatchTasksHistory(@RequestParam Integer page, @RequestParam Integer pageSize) {
+        GetBatchTasksHistoryVo res = batchTaskService.getBatchTasksHistory(page, pageSize);
+        return CommonResult.success(res, "获取历史成功");
     }
 
 }
