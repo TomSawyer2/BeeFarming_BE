@@ -221,6 +221,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         String status = "";
         String exitCode = "";
         boolean isExited = false;
+        boolean isTimeout = false;
         long begin = System.currentTimeMillis();
 
         try {
@@ -231,37 +232,21 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                     exitCode = myDockerClient.inspectExitCode(batchTask.getContainerId());
                     break;
                 } else {
-                    int currentRound = 0;
-                    if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
-                        currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
-                    }
                     long cur = System.currentTimeMillis();
                     if (cur - begin > batchTask.getTimeout() * 60 * 1000) {
                         // 超时逻辑
-                        myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                         batchTask.setEndTime(new Date());
                         batchTask.setStatus(BatchTaskStatus.TIMEOUT.getCode());
-                        batchTask.setCurrentRound(currentRound);
-                        batchTaskMapper.updateById(batchTask);
-                    }
-
-                    if (redisService.containsKey(String.valueOf(batchTask.getId()))) {
-                        batchTask.setCurrentRound(currentRound);
-                        // 更新batchTask的roundInfo
-                        batchTaskMapper.updateById(batchTask);
+                        isTimeout = true;
+                        break;
                     }
 
                     Thread.sleep(1000);
                 }
             }
-            int currentRound = 0;
-            if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
-                currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
-            }
-            if (isExited) {
-                if ("'0'".equals(exitCode)) {
-                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
 
+            if (!isTimeout) {
+                if ("'0'".equals(exitCode)) {
                     String upperResultPath = "/home/ubuntu/BF/archiveResults/" + batchTask.getId() + "/output-upper";
                     List<String> linesUpper = Files.readAllLines(Paths.get(upperResultPath), StandardCharsets.UTF_8);
                     String upperResult = String.join(",", linesUpper);
@@ -274,35 +259,31 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FINISHED.getCode());
-                    batchTask.setCurrentRound(currentRound);
-                    batchTaskMapper.updateById(batchTask);
                 } else {
-                    myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
                     // 报错退出处理
                     batchTask.setEndTime(new Date());
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
-                    batchTask.setCurrentRound(currentRound);
-                    batchTaskMapper.updateById(batchTask);
                 }
-            } else {
-                myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
-                // 报错退出处理
-                batchTask.setEndTime(new Date());
-                batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
-                batchTask.setCurrentRound(currentRound);
-                batchTaskMapper.updateById(batchTask);
             }
         } catch(Exception e) {
-            myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
             batchTask.setEndTime(new Date());
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
-            batchTaskMapper.updateById(batchTask);
         }
 
+        int currentRound = 0;
+        if (redisService.getValue(String.valueOf(batchTask.getId())) != null) {
+            currentRound = Integer.parseInt(redisService.getValue(String.valueOf(batchTask.getId())));
+        }
+        batchTask.setCurrentRound(currentRound);
+
+        String logs = myDockerClient.execTailContainerLogsCmd(batchTask.getContainerId(), 300);
+        batchTask.setContainerLog(logs);
+
+        batchTaskMapper.updateById(batchTask);
+        myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
         User user = userMapper.selectById(AuthInterceptor.getCurrentUser().getId());
         user.setStatus(UserStatus.IDLE.getCode());
         userMapper.updateById(user);
-
     }
 
     @Override
@@ -310,7 +291,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         BatchTask batchTask = batchTaskMapper.selectById(id);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
         if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
-        if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
+        if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode() && batchTask.getStatus() != BatchTaskStatus.FAILED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
         GetBatchTasksResultVo res = new GetBatchTasksResultVo();
         BeanUtils.copyProperties(batchTask, res);
         return res;

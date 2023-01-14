@@ -141,7 +141,7 @@ public class MyDockerClient {
     }
 
     public String execTailContainerLogsCmd(String container, int lines) {
-        String cmd = String.format("tail -n %s `docker inspect %s  --format='{{.LogPath}}`", lines,container);
+        String cmd = String.format("docker logs --tail %d %s", lines, container);
         String logs = execRuntimeCmd(cmd);
         log.info("read logs from {}, length {}", container, logs.length());
         return logs;

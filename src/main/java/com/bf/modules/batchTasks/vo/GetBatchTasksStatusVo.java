@@ -23,4 +23,22 @@ public class GetBatchTasksStatusVo {
 
     private String name;
 
+    @NotBlank
+    private Integer timeout;
+
+    @NotBlank
+    private String containerId;
+
+    @NotBlank
+    private Integer codeIdAHoney;
+
+    @NotBlank
+    private Integer codeIdAHornet;
+
+    @NotBlank
+    private Integer codeIdBHoney;
+
+    @NotBlank
+    private Integer codeIdBHornet;
+
 }

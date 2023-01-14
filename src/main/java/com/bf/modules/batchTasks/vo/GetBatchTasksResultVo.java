@@ -53,4 +53,6 @@ public class GetBatchTasksResultVo {
     @NotBlank
     private Integer timeout;
 
+    private String containerLog;
+
 }

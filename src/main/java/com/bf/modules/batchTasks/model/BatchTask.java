@@ -45,4 +45,6 @@ public class BatchTask {
     private java.util.Date endTime;
 
     private Integer timeout;
+
+    private String containerLog;
 }
