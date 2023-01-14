@@ -185,6 +185,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public GetBatchTasksStatusVo getBatchTasksStatus(Integer batchTaskId) {
         BatchTask batchTask = batchTaskMapper.selectById(batchTaskId);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
         GetBatchTasksStatusVo res = new GetBatchTasksStatusVo();
         BeanUtils.copyProperties(batchTask, res);
         int currentRound = res.getCurrentRound();
@@ -200,6 +201,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public StopBatchTaskVo stopBatchTask(Integer batchTaskId) {
         BatchTask batchTask = batchTaskMapper.selectById(batchTaskId);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
         if (batchTask.getStatus() != BatchTaskStatus.RUNNING.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_RUNNING);
         myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
         batchTask.setStatus(BatchTaskStatus.FAILED.getCode());

@@ -43,9 +43,17 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (method.isAnnotationPresent(LoginRequired.class)) {
             LoginRequired loginRequired = method.getAnnotation(LoginRequired.class);
             int userId = jwtUtils.getUserIdFromToken(request);
+            User user = userMapper.selectById(userId);
+            if (user.getPermission() == Permission.BANNED.getCode()) Asserts.fail(ResultCode.USER_BANNED);
             if (userId != -1) {
                 // 权限校验
-                return auth(loginRequired.needPermission(), userId);
+                Boolean result = auth(loginRequired.needPermission(), userId);
+                if (result) {
+                    return true;
+                } else {
+                    Asserts.fail(ResultCode.PERMISSION_DENIED);
+                    return false;
+                }
             } else {
                 Asserts.fail(ResultCode.TOKEN_MISSING);
             }
@@ -69,13 +77,22 @@ public class AuthInterceptor implements HandlerInterceptor {
     private boolean auth(Permission[] permissions, Integer id) {
         User user = userMapper.selectById(id);
         for (Permission p : permissions) {
-            if (user != null){
-                currentUser.set(user);
-                return true;
+            if (p == Permission.ADMIN) {
+                if (user != null && user.getPermission() == Permission.ADMIN.getCode()) {
+                    currentUser.set(user);
+                    return true;
+                }
+                else break;
+            } else if (p == Permission.USER) {
+                if (user != null && (user.getPermission() == Permission.USER.getCode() || user.getPermission() == Permission.ADMIN.getCode())) {
+                    currentUser.set(user);
+                    return true;
+                }
+                else break;
             }
-            else break;
         }
         return false;
+
     }
 
 }

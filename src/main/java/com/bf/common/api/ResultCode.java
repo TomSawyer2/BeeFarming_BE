@@ -6,6 +6,8 @@ public enum ResultCode implements ErrorCode {
     USERNAME_EXIST(1, "用户名已存在"),
     USER_NOT_EXIST(2, "用户不存在"),
     PWD_ERR(3, "密码错误"),
+    USER_BANNED(4, "当前用户已被封禁"),
+    PERMISSION_DENIED(5, "权限不足"),
     CODE_NOT_EXIST(101, "代码不存在"),
     BATCH_TASK_NOT_EXIST(102, "批处理任务不存在"),
     BATCH_TASK_NOT_RUNNING(103, "批处理任务未运行"),

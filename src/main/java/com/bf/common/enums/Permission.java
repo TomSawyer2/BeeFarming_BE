@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Permission {
+    BANNED(-1, "封禁"),
     USER(0, "普通用户"),
     ADMIN(1, "管理员");
 

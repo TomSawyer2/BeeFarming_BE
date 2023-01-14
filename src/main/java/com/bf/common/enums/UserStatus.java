@@ -2,8 +2,7 @@ package com.bf.common.enums;
 
 public enum UserStatus {
     IDLE(0, "闲置状态"),
-    TASK_RUNNING(1, "任务运行中"),
-    BANNED(2, "封禁中");
+    TASK_RUNNING(1, "任务运行中");
 
     private final int code;
     private final String description;
