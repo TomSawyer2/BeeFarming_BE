@@ -44,8 +44,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             LoginRequired loginRequired = method.getAnnotation(LoginRequired.class);
             int userId = jwtUtils.getUserIdFromToken(request);
             User user = userMapper.selectById(userId);
-            if (user.getPermission() == Permission.BANNED.getCode()) Asserts.fail(ResultCode.USER_BANNED);
             if (userId != -1) {
+                if (user.getPermission() == Permission.BANNED.getCode()) Asserts.fail(ResultCode.USER_BANNED);
                 // 权限校验
                 Boolean result = auth(loginRequired.needPermission(), userId);
                 if (result) {
