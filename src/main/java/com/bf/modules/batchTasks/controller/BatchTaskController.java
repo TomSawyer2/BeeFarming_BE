@@ -5,6 +5,7 @@ import com.bf.common.api.CommonResult;
 import com.bf.common.enums.Permission;
 import com.bf.modules.admin.vo.GetCodeForAdminVo;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
+import com.bf.modules.batchTasks.dto.StopBatchTaskDto;
 import com.bf.modules.batchTasks.dto.UploadCodeForBatchTasksDto;
 import com.bf.modules.batchTasks.model.BatchTask;
 import com.bf.modules.batchTasks.service.BatchTaskService;
@@ -44,10 +45,10 @@ public class BatchTaskController {
         return CommonResult.success(res, "状态查询成功");
     }
 
-    @PutMapping("/stop")
+    @PostMapping("/stop")
     @LoginRequired(needPermission = Permission.USER)
-    public CommonResult stopBatchTask(@RequestParam Integer batchTaskId) {
-        StopBatchTaskVo res = batchTaskService.stopBatchTask(batchTaskId);
+    public CommonResult stopBatchTask(@RequestBody StopBatchTaskDto StopBatchTaskDto) {
+        StopBatchTaskVo res = batchTaskService.stopBatchTask(StopBatchTaskDto.getBatchTaskId());
         return CommonResult.success(res, "停止成功");
     }
 
