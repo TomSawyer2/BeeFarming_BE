@@ -210,9 +210,9 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         StopBatchTaskVo res = new StopBatchTaskVo();
         res.setBatchTaskId(batchTaskId);
         res.setStatus(BatchTaskStatus.FAILED.getCode());
-        User user = userMapper.selectById(AuthInterceptor.getCurrentUser().getId());
-        user.setStatus(UserStatus.IDLE.getCode());
-        userMapper.updateById(user);
+        User currentUser = AuthInterceptor.getCurrentUser();
+        currentUser.setStatus(UserStatus.IDLE.getCode());
+        userMapper.updateById(currentUser);
         return res;
     }
 
