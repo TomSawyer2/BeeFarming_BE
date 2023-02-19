@@ -22,6 +22,53 @@ BF的后端
 
 推荐在本地使用`docker`安装`mysql`，并使用`Navicat`连接数据库
 
+配置文件示例：
+
+```yml
+server:
+  port: ${port}
+
+spring:
+  application:
+    name: BeeFarming_BE
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    name: bee_farming
+    url: jdbc:mysql://${ip}:${port}/${dbName}?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+    username: ${username}
+    password: "${password}"
+  redis:
+    database: 1
+    host: 127.0.0.1
+    port: 6380
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+  configuration:
+    auto-mapping-behavior: partial
+    map-underscore-to-camel-case: true
+  type-enums-package: com.bf
+
+jwt:
+  tokenHeader: Authorization
+  secret: ${secret}
+
+docker:
+  max-containers-num: 45
+  max-pids-num: 100
+  # ms
+  heart-beat: 10000
+  # container for server and bot
+  container:
+    image-name: beefarming_game
+    cpu-count: 2
+    # MB
+    memory: 512
+```
+
 ### 三、Docker配置
 
 需在本地安装`docker`，并获取最新的BeeFarming镜像，同时开放2375端口
