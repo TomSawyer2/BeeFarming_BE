@@ -292,6 +292,27 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
         if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
         if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode() && batchTask.getStatus() != BatchTaskStatus.FAILED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
+        // 如果有结果则通过结果计算置信度
+        if (batchTask.getUpperGoals() != null && batchTask.getUpperGoals() != "" && batchTask.getLowerGoals() != null && batchTask.getLowerGoals() != "") {
+            String[] upperGoals = batchTask.getUpperGoals().split(",");
+            String[] lowerGoals = batchTask.getLowerGoals().split(",");
+            // 计算玩家A和B赢的次数
+            int winnerA = 0;
+            int winnerB = 0;
+            for (int i = 0; i < upperGoals.length; i++) {
+                String upperGoal = upperGoals[i];
+                String lowerGoal = lowerGoals[i];
+                if (Integer.parseInt(upperGoal.split(" ")[0]) > Integer.parseInt(lowerGoal.split(" ")[0])) {
+                    winnerA ++;
+                } else if (Integer.parseInt(upperGoal.split(" ")[0]) < Integer.parseInt(lowerGoal.split(" ")[0])) {
+                    winnerB ++;
+                }
+            }
+            // 计算置信度
+            Double confidenceLevel = 11.45;
+            batchTask.setConfidenceLevel(confidenceLevel);
+            batchTaskMapper.updateById(batchTask);
+        }
         GetBatchTasksResultVo res = new GetBatchTasksResultVo();
         BeanUtils.copyProperties(batchTask, res);
         return res;

@@ -55,4 +55,6 @@ public class GetBatchTasksResultVo {
 
     private String containerLog;
 
+    private Double confidenceLevel;
+
 }

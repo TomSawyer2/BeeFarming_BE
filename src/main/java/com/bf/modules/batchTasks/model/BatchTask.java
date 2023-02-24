@@ -47,4 +47,6 @@ public class BatchTask {
     private Integer timeout;
 
     private String containerLog;
+
+    private Double confidenceLevel;
 }
