@@ -11,6 +11,7 @@ import com.bf.common.enums.UserStatus;
 import com.bf.common.exception.Asserts;
 import com.bf.common.interceptor.AuthInterceptor;
 import com.bf.common.service.RedisService;
+import com.bf.common.util.ConfidenceLevel;
 import com.bf.common.util.JwtUtils;
 import com.bf.modules.admin.vo.GetCodeForAdminVo;
 import com.bf.modules.batchTasks.dto.RunBatchTasksDto;
@@ -113,7 +114,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
             Asserts.fail(ResultCode.CODE_NOT_EXIST);
         } else if (codeAHoney.getUserId() != currentUserId || codeAHornet.getUserId() != currentUserId || codeBHoney.getUserId() != currentUserId || codeBHornet.getUserId() != currentUserId) {
             Asserts.fail(ResultCode.CODE_NOT_BELONG_TO_USER);
-        } else if (!"honey-A".equals(codeAHoney.getType()) || !"hornet-A".equals(codeAHornet.getType()) || !"honey-B".equals(codeBHoney.getType()) || !"hornet-B".equals(codeBHornet.getType()) ) {
+        } else if (!"honey-A".equals(codeAHoney.getType()) || !"hornet-A".equals(codeAHornet.getType()) || !"honey-B".equals(codeBHoney.getType()) || !"hornet-B".equals(codeBHornet.getType())) {
             Asserts.fail(ResultCode.CODE_NOT_CORRESPOND);
         }
 
@@ -148,25 +149,25 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
         String codeAHoneyPath = codeFilesIdPath + "/codeAHoney.java";
         try (FileWriter writer = new FileWriter(codeAHoneyPath)) {
             writer.write(codeAHoney.getContent());
-        } catch(IOException e){
+        } catch (IOException e) {
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
         String codeAHornetPath = codeFilesIdPath + "/codeAHornet.java";
         try (FileWriter writer = new FileWriter(codeAHornetPath)) {
             writer.write(codeAHornet.getContent());
-        } catch(IOException e){
+        } catch (IOException e) {
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
         String codeBHoneyPath = codeFilesIdPath + "/codeBHoney.java";
         try (FileWriter writer = new FileWriter(codeBHoneyPath)) {
             writer.write(codeBHoney.getContent());
-        } catch(IOException e){
+        } catch (IOException e) {
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
         String codeBHornetPath = codeFilesIdPath + "/codeBHornet.java";
         try (FileWriter writer = new FileWriter(codeBHornetPath)) {
             writer.write(codeBHornet.getContent());
-        } catch(IOException e){
+        } catch (IOException e) {
             Asserts.fail(ResultCode.CODE_SAVE_ERR);
         }
 
@@ -185,7 +186,8 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public GetBatchTasksStatusVo getBatchTasksStatus(Integer batchTaskId) {
         BatchTask batchTask = batchTaskMapper.selectById(batchTaskId);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
-        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId())
+            Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
         GetBatchTasksStatusVo res = new GetBatchTasksStatusVo();
         BeanUtils.copyProperties(batchTask, res);
         int currentRound = res.getCurrentRound();
@@ -201,7 +203,8 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public StopBatchTaskVo stopBatchTask(Integer batchTaskId) {
         BatchTask batchTask = batchTaskMapper.selectById(batchTaskId);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
-        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId())
+            Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
         if (batchTask.getStatus() != BatchTaskStatus.RUNNING.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_RUNNING);
         myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
         batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
@@ -265,7 +268,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
                     batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             batchTask.setEndTime(new Date());
             batchTask.setStatus(BatchTaskStatus.FAILED.getCode());
         }
@@ -281,7 +284,7 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
 
         batchTaskMapper.updateById(batchTask);
         myDockerClient.stopAndRemoveContainer(batchTask.getContainerId());
-        User user = userMapper.selectById(AuthInterceptor.getCurrentUser().getId());
+        User user = userMapper.selectById(batchTask.getUserId());
         user.setStatus(UserStatus.IDLE.getCode());
         userMapper.updateById(user);
     }
@@ -290,53 +293,30 @@ public class BatchTaskServiceImpl extends ServiceImpl<BatchTaskMapper, BatchTask
     public GetBatchTasksResultVo getBatchTasksResult(int id) {
         BatchTask batchTask = batchTaskMapper.selectById(id);
         if (batchTask == null) Asserts.fail(ResultCode.BATCH_TASK_NOT_EXIST);
-        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId()) Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
-        if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode() && batchTask.getStatus() != BatchTaskStatus.FAILED.getCode()) Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
+        if (batchTask.getUserId() != AuthInterceptor.getCurrentUser().getId())
+            Asserts.fail(ResultCode.BATCH_TASK_NOT_BELONG_TO_USER);
+        if (batchTask.getStatus() != BatchTaskStatus.FINISHED.getCode() && batchTask.getStatus() != BatchTaskStatus.FAILED.getCode())
+            Asserts.fail(ResultCode.BATCH_TASK_NOT_FINISHED);
         // 如果有结果则通过结果计算置信度
         if (batchTask.getUpperGoals() != null && batchTask.getUpperGoals() != "" && batchTask.getLowerGoals() != null && batchTask.getLowerGoals() != "") {
             String[] upperGoals = batchTask.getUpperGoals().split(",");
+            System.out.println(upperGoals);
             String[] lowerGoals = batchTask.getLowerGoals().split(",");
+            System.out.println(lowerGoals);
             // 计算玩家A和B赢的次数
             int winnerA = 0;
             int winnerB = 0;
             for (int i = 0; i < upperGoals.length; i++) {
                 String upperGoal = upperGoals[i];
                 String lowerGoal = lowerGoals[i];
-                if (Integer.parseInt(upperGoal.split(" ")[0]) > Integer.parseInt(lowerGoal.split(" ")[0])) {
-                    winnerA ++;
-                } else if (Integer.parseInt(upperGoal.split(" ")[0]) < Integer.parseInt(lowerGoal.split(" ")[0])) {
-                    winnerB ++;
+                if (Integer.parseInt(upperGoal.split(" ")[3]) > Integer.parseInt(lowerGoal.split(" ")[3])) {
+                    winnerA++;
+                } else if (Integer.parseInt(upperGoal.split(" ")[3]) < Integer.parseInt(lowerGoal.split(" ")[3])) {
+                    winnerB++;
                 }
             }
             // 计算置信度
-            Double confidenceLevel;
-            //H0:A比B厉害，即总体均值\mu大于等于0.5
-            //样本均值
-            int N = winnerA + winnerB;
-            double Xbar = (winnerA) / (double)(winnerA + winnerB);
-            double[][] ts = new double[][]{
-                    {1, 3.078,6.314,12.706,31.821,63.657,127.321,318.309,636.619},
-                    {0.727, 1.476, 2.015, 2.571, 3.365, 4.032, 4.773, 5.893, 6.869},
-                    {0.7, 1.372, 1.812, 2.228, 2.764, 3.169, 3.581, 4.144, 4.587},
-                    {0.687, 1.325, 1.725, 2.086, 2.528, 2.845, 3.153, 3.552, 3.85},
-                    {0.679, 1.299, 1.676, 2.009, 2.403, 2.678, 2.937, 3.261, 3.496},
-                    {0.677, 1.29, 1.66, 1.984, 2.364, 2.626, 2.871, 3.174, 3.39},
-                    {0.676, 1.286, 1.653, 1.972, 2.345, 2.601, 2.839, 3.131, 3.34},
-                    {0.675, 1.283, 1.648, 1.965, 2.334, 2.586, 2.82, 3.107, 3.31}
-            };
-            double[] toP = new double[]{0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.0025, 0.001, 0.0005};
-            int[] toN = new int[]{1, 5, 10, 20, 50, 100, 200, 500};
-            double sigma = Math.sqrt(Xbar - Xbar * Xbar) * Math.sqrt((double)(N) / (double)(N + 1));
-            double tt = (Xbar - 0.5) / (sigma / Math.sqrt(N));
-            int i = 0;
-            for(i = 0; N != toN[i] && i < 7; i++);
-            int j = 8;
-            for(j = 8; j > -1 && tt < ts[i][j]; j--);
-            if (j == -1) {
-                confidenceLevel = 50.00;
-            } else {
-                confidenceLevel = (1 - toP[j]) * 100;
-            }
+            Double confidenceLevel = ConfidenceLevel.computeConfidenceLevel(winnerA, winnerB);
             batchTask.setConfidenceLevel(confidenceLevel);
             batchTaskMapper.updateById(batchTask);
         }
